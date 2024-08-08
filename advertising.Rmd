@@ -1,0 +1,479 @@
+---
+title: "REGRESSION ANALYSIS ON ADVERTISING DATA"
+author: "Pallabi Dutta"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: true
+    theme: united
+---
+
+# INTRODUCTION:
+Advertising aims to to put a product or service in the spotlight in the hope of grabbing the attention of the potential customers. This is mainly done in order to attract interest, engagement and sales. Therefore, money needs to be spent wisely on advertising in order to reach more potential buyers so that the sales of the product increases. Therefore, studies are conducted by corporate firms so to find a perfect combination of amount spent on promotions and number of units of product sales so that a company can take decisions to gain and increase its sales.
+
+# OBJECTIVE:
+The primary objective of this study is to analyze the impact of different advertising channels (TV, Billboards, Google Ads, Social Media, Influencer Marketing, and Affiliate Marketing) on product sales. This study aims to determine the statistical significance of these relationships and develop a predictive model to forecast future sales. The goal of the study is to provide actionable insights for optimizing advertising budgets. This will help businesses enhance their marketing strategies and improve sales performance.
+
+# DATA DESCRIPTION AND DATA PREPROCESSING:
+
+The data set is obtained from [kaggle-Product Advertising Data](https://www.kaggle.com/datasets/singhnavjot2062001/product-advertising-data).
+
+The data set contains information of advertising impact on product sales. The data contains 300 observations.
+
+• **TV:** Advertising costs on television.
+
+• **Billboards:** Advertising costs associated with billboards.
+
+• **Google_Ads:** Advertising costs incurred on Google Ads.
+
+• **Social_Media:** Advertising expenses on various social media platforms.
+
+• **Influencer_Marketing:** Costs related to influencer marketing.
+
+• **Affiliate_Marketing:** Expenditure on affiliate marketing efforts.
+
+• **Product_Sold:** Number of units sold corresponding to the advertising costs on various platforms.
+
+At first, we import the data set. Then we use str() to find the structure of the data set and information about the class, length and content of each column. 
+
+```{r,echo=FALSE,comment=NA}
+data=read.csv("C:/Users/Pallabi dutta/Downloads/Advertising_Data.csv")
+str(data)
+```
+All of the variables are of integer data type.
+
+Now, we take a look at the first few rows of the data set.
+```{r,echo=FALSE,comment=NA}
+library(knitr)
+kable(data[1:10,])
+```
+Here, **Product_Sold** is the response variable.
+
+Our objective is to determine how the regressors are able to explain sales of the product by building up a regression model of **Product_Sales** on the regressors.
+
+## Checking for Missing Values:
+For successful data analysis, it is needed to check whether there are any missing values in the data set or not since missing information may lead to erroneous conclusions. If there are missing observations, the rows or columns containing missing values may be deleted or impute the missing value with a constant or some statistics like mean, median or mode of each column in which the missing value is located.
+
+```{r,echo=FALSE,comment=NA}
+colSums(is.na(data))
+```
+
+It is found that our data set contains no missing information. Therefore, the analysis can be proceeded.
+
+# EXPLORATORY DATA ANALYSIS:
+
+We conduct some initial investigations on the data to discover patterns, to spot anomalies, to test hypotheses and to check assumptions with the help of summary statistics and graphical representations.
+
+Firstly, we use **summary()** to calculate the summary statistics for each column.
+```{r,echo=FALSE,comment=NA,results='asis',warning=FALSE}
+library(xtable)
+newobject=xtable(summary(data))
+print.xtable(newobject,type="html")
+```
+
+Now, looking at the distribution of each of the predictors.
+```{r,echo=FALSE,comment=NA}
+attach(data)
+par(mfrow=c(2,2)) 
+hist(TV,col="light blue")
+boxplot(TV,col=4)
+hist(Billboards,col="lightgreen")
+boxplot(Billboards,col=3,main="Billboards")
+hist(Google_Ads,col="deep pink")
+boxplot(Google_Ads,col=6,main="Google_Ads")
+hist(Social_Media,col="yellow")
+boxplot(Social_Media,col=7,main="Social_Media")
+hist(Influencer_Marketing,col="purple")
+boxplot(Influencer_Marketing,col=14,main="Influencer_Marketing")
+hist(Affiliate_Marketing,col="sea green")
+boxplot(Affiliate_Marketing,col="dark green",main="Affiliate_Marketing")
+par(mfrow=c(1,1))
+```
+
+Next, looking at the distribution of the response variable **Product_Sold**.
+```{r,echo=FALSE,comment=NA}
+par(mfrow=c(1,2))
+hist(Product_Sold,col=2)
+boxplot(Product_Sold,col=2,main="Product_Sold")
+par(mfrow=c(1,1))
+```
+
+
+Visualizing the relationship between amount on advertising on units sold and the covariates.
+```{r,echo=FALSE,comment=NA}
+par(mfrow=c(2,2))
+plot(TV,Product_Sold,col=10,pch=19)
+abline(lm(Product_Sold~TV),col="navyblue",lwd=2)
+plot(Billboards,Product_Sold,col=8,pch=19)
+abline(lm(Product_Sold~Billboards),col="navyblue",lwd=2)
+plot(Google_Ads,Product_Sold,col=14,pch=19)
+abline(lm(Product_Sold~Google_Ads),col="navyblue",lwd=2)
+plot(Social_Media,Product_Sold,col=11,pch=19)
+abline(lm(Product_Sold~Social_Media),col="navyblue",lwd=2)
+plot(Influencer_Marketing,Product_Sold,col=7,pch=19)
+abline(lm(Product_Sold~Influencer_Marketing),col="navyblue",lwd=2)
+plot(Affiliate_Marketing,Product_Sold,col=3,pch=19)
+abline(lm(Product_Sold~Affiliate_Marketing),col="navyblue",lwd=2)
+par(mfrow=c(1,1))
+```
+
+
+Also getting a clear idea about the relationship of the response value with the covariates by observing of the correlation matrix.
+```{r,echo=FALSE,comment=NA,results='asis',warning=FALSE}
+newobject=xtable(cor(data))
+print.xtable(newobject,type="html")
+image(cor(data),col=terrain.colors(7),xlim=c(0,1.8))
+legend(1.1, 0.8,legend=c("TV","Billboards","Google_Ads","Social_Media","Influencer_Marketing","Affiliate_Marketing","Product_Sold"),fill=terrain.colors(7))
+```
+
+<div class="warning" style='background-color:#C5D2FD; color: #68737A; border-left: solid #808AD5 4px; border-radius: 4px; padding:0.7em;'>
+<span>
+<p style='margin-top:1em; text-align:center'>
+<b>**Summary of analysis:**</b></p>
+<p style='margin-left:1em;'>
+
+
+• **Response:** The histogram of **Product_Sold** is slightly negatively distributed. The box-plot shows the presence of outliers. The median number of units of products sold is approximately 7100.
+
+• **Regressors:** The variable TV has a very slight positive skewness. The median expenditure of TV is nearly 500. The variable **Billboards** has a very slight negative skewness. The median expenditure of **Billboards** is nearly 530. The variable **Google_Ads** has a very slight negative skewness. The median expenditure of **Google_Ads** is nearly 530. The variable **Social_Media** has a very slight positive skewness. The median expenditure of **Social_Media** is nearly 490. The variable **Influencer_Marketing** has a slight positive skewness. The median expenditure of **Influencer_Marketing** is nearly 480. The variable **Affiliate_Marketing** has a slight positive skewness. The median expenditure of **Affiliate_Marketing** is nearly 450. 
+
+• **Correlation:** There is positive correlation between the response and the covariates. Among them, the correlation between the **response** and **Affiliate_Marketing** is maximum. 
+</p>
+<p style='margin-bottom:1em; margin-right:1em; text-align:right; font-family:Georgia'> <b>- </b> <i> </i>
+</p></span>
+</div>
+
+# MODEL FITTING:
+
+First, we regress the response against each predictor.
+
+We define a multiple linear regression model as:
+
+$Y_{i}=\beta_{0}+\beta_{1}x_{i1}+\beta_{2}x_{i2}+\beta_{3}x_{i3}+\beta_{4}x_{i4}+\beta_{5}x_{i5}+\beta_{6}x_{i6}+\epsilon_{i}\forall i=1(1)300$
+under the assumptions,
+
+• $E(\epsilon_{i})=0\forall i=1(1)300$
+
+• $Var(\epsilon_{i})=\sigma^{2}\forall i=1(1)300$
+
+• $cov(\epsilon_{i},\epsilon_{j})=0\forall i\ne j$
+
+• $\epsilon_{i}\sim N(0,\sigma^{2})\forall i=1(1)300$
+
+
+
+Here the regression equation is of the form:
+
+**Product_Sold** = $\beta_{0}$+$\beta_{1}$**TV**+$\beta_{2}$**Billboards**+$\beta_{3}$**Google_Ads**+$\beta_{4}$**Social_Media**+$\beta_{5}$**Influencer_Marketing**+$\beta_{6}$**Affiliate_Marketing**+$\epsilon_{i}\forall i=1(1)300$ where $(\beta_{1},\beta_{2},\beta_{3},\beta_{4},\beta_{5},\beta_{6})$ are the coefficients of the effects of the covariates and $\beta_{0}$ is the intercept. $\beta_{i}^{'}s\forall i=1(1)6$ are the average changes in number of units sold corresponding to a unit change in ith covariate. $\beta_{0}$ is the average number of units sold when none of the advertisements are used. 
+
+**Fitting a linear model by ordinary least square:**
+
+```{r,echo=FALSE,comment=NA}
+model=lm(Product_Sold~.,data)
+summary(model)
+```
+## DETECTION OF OUTLIERS AND INFLUENTIAL POINTS:
+
+Now we find whether are any anomalies in the data set.
+
+### Detection of influential points by cook's distance:
+Cook's Distance measures the change in distance in the fitted regression line if an observation is deleted from the regression equation. It therefore combines the outlier and leverage point diagnostics of a measure. The Cook's Distance statistic is 
+
+$D_{i}=\frac{\Sigma_{j=1}^{n}(\hat{y_j}-\hat{y}_{j(i)})^{2}}{ps^{2}}$
+where $s^{2}$ is the Mean Squared Error and $\hat{y}_{j(i)}$ is the fitted response value after deleting the ith observation.
+
+If $D_{i}>\frac{4}{n}$ where n is the number of observations then $D_{i}$is tagged as an influential point. 
+
+```{r,echo=FALSE,comment=NA}
+n=nrow(data)
+t=4/n 
+plot(cooks.distance(model),pch="*",main="Detection of Influential Point by Cook's Distance")
+abline(h=t,col="red3",lwd=2)
+outlier1=which(cooks.distance(model)>t) 
+names(outlier1)
+```
+
+The red line denotes the cut off.
+There are **14** outliers. 
+
+### Detection of outliers using studentized residuals:
+Studentized residuals are a type of standardized residual used in regression analysis to assess the fit of a model. These help in identifying outliers and influential data points. The studentized residual statistic is 
+$e_{i}^{s}=\frac{e_{i}}{\hat\sigma_{(i)} {\sqrt{1-h_{ii}}}}$
+where 
+
+• $e_{i}=y_{i}-\hat{y}_{i}$ is the value of the ith residual (the difference between the observed value and the predicted value).
+
+• $\hat\sigma_{(i)}$ is the standard deviation of the residuals calculated without the ith observation.
+
+• $h_{ii}$ is the leverage of the ith observation, a measure of the influence of the ith data point on the fitted value.
+
+At 5% level of significance, if $e_{i}^{s}>2$ then the ith observation can be tagged as an outlier. 
+
+```{r,echo=FALSE,comment=NA}
+plot(rstudent(model),pch="*",main="Detection of Outlier by studentized residual")
+abline(h=2,col="green",lwd=2)
+outlier=which(rstudent(model)>2)
+names(outlier)
+```
+
+The green line denotes the cut off.
+There are **6** outliers. 
+
+Removing the points (which are both influential as well as outlier) from the dataset to clean the dataset and make the data ready for further analysis.
+
+```{r,echo=FALSE,comment=NA}
+data1=data[-c(intersect(outlier1,outlier)),] 
+cat("Original dimension:",dim(data))
+cat("New dimension:",dim(data1))
+```
+The original dimension shrinks.
+ 
+## TRAIN AND TEST DATA:
+
+To find the model efficiency, we divide the whole data set into two parts:
+
+• training data set - subset to train a model
+
+• test data set - subset to test the trained model.
+
+Here, we divide the data into training and testing data set in the ratio 80:20. 
+
+Now, firstly a multiple linear regression is fitted on the regressors using the training data set.
+
+```{r,echo=FALSE,comment=NA}
+sam=sample(n,n*.8)
+train=data1[sam,]
+test=data1[-sam,]
+X.train=train[,-7]
+y.train=train[,7]
+X.test=test[,-7]
+y.test=test[,7]
+model=lm(y.train~.,data=X.train) 
+summary(model)
+```
+
+The RSE improves in the training model more than the previous model. 
+
+Now, considering the prediction accuracy of the model by predicting on the test dataset:
+```{r,echo=FALSE,comment=NA}
+pred.y=predict(model,X.test)
+r2=1-((sum((y.test-pred.y)^2)/(300-6-1))/(sum((y.test-mean(y.test))^2)/(300-1))) 
+cat("R^2:",r2)
+rse=sqrt(sum((y.test-pred.y)^2)/(300-2))
+cat("RSE:",rse)
+```
+
+<div class="warning" style='background-color:#C3F2DD; color: #68738A; border-left: solid #818AD5 4px; border-radius: 4px; padding:0.5em;'>
+<span>
+<p style='margin-top:1em; text-align:center'>
+<p style='margin-left:1em; text-align:center'>
+**The model performs very well on the test data set as the Adjusted $R^{2}$ is nearly 1 and the RSE is quite small.**
+</p>
+<p style='margin-bottom:0.5em; margin-right:0.5em; text-align:right; font-family:Georgia'> <b>- </b> <i> </i>
+</p></span>
+</div> 
+
+# CHECKING MODEL ASSUMPTIONS:
+
+## Heteroscedasticity:
+
+*In this model, errors might be heteroscedastic because larger budgets can lead to more varied results, different types of ads have different effects, market conditions can change unpredictably, and seasonal factors affect performance. This causes errors to have uneven spread or variability.*
+
+```{r,echo=FALSE,comment=NA}
+plot(fitted(model),residuals(model),pch="*",col="navyblue",main="Residuals vs Fitted",ylim=c(-30,30),xlab="Fitted values",ylab="Residuals")
+abline(h=0,col="red4")
+```
+
+<div class="warning" style='background-color:#C3F2FE; color: #68738A; border-left: solid #818AD5 4px; border-radius: 4px; padding:0.5em;'>
+<span>
+<p style='margin-top:1em; text-align:center'>
+<p style='margin-left:1em; text-align:center'>
+**The residuals roughly show a constant horizontal band around the 0 line suggesting that the variances of the error terms are equal, thereby indicating no heteroscedasticity in the model.**
+</p>
+<p style='margin-bottom:0.5em; margin-right:0.5em; text-align:right; font-family:Georgia'> <b>- </b> <i> </i>
+</p></span>
+</div>
+
+## Linearity:
+
+<div class="warning" style='background-color:#D3F2DD; color: #68738A; border-left: solid #818AD5 4px; border-radius: 4px; padding:0.5em;'>
+<span>
+<p style='margin-top:1em; text-align:center'>
+<p style='margin-left:1em; text-align:center'>
+**The absence of patterns in the residuals in the plot, which are randomly dispersed around the 0 line, supports the assumption of linearity.**
+</p>
+<p style='margin-bottom:0.5em; margin-right:0.5em; text-align:right; font-family:Georgia'> <b>- </b> <i> </i>
+</p></span>
+</div>
+
+
+## Autocorrelation:
+
+**The advertising data may contain correlated variables because spending on different channels often moves together, external factors like seasons affect all channels and campaigns target similar audiences. These patterns can make the data seem linked or correlated.**
+
+Autocorrelation is defined as the correlation between the members of a series of observations. We need to test if $cov(\epsilon_{i},\epsilon_{j})\ne0\forall i\ne j$
+
+We use durbin watson test for detecting autocorrelation: $d=\frac{\sum_{i=2}^{n}(\epsilon_{i}-\epsilon_{i-1})^{2}}{\sum_{i=1}^{n}\epsilon_{i}^{2}}$
+
+The following assumptions are made to use the statistic d:
+
+• Model includes intercept term
+
+• Explanatory variables are non stochastic
+
+• $\epsilon_{i}'s$ are generated from AR(1) model, i.e., $\epsilon_{i}=\epsilon_{i-1}+u_{i}\forall i=1(1)300. $
+
+• $\epsilon_{i}\sim N(0,\sigma^{2})\forall i=1(1)300$
+
+• No missing observations
+ 
+Sample correlation estimate: $\hat{\rho}=\frac{\sum_{i=1}^{n}\hat{\epsilon_{i}}\hat{\epsilon}_{i-1}}{\sqrt{\sum_{i=2}^{n}\hat{\epsilon}_{i-1}^{2}\sum_{i=1}^{n}\hat{\epsilon}_{i}^{2}}}$
+
+Assuming $\sum_{i=1}^{n}\hat{\epsilon}_{i}^{2}\approx\sum_{i=2}^{n}\hat{\epsilon}_{i-1}^{2}$,we have $d=2(1-\hat{\rho})$
+
+We want to test $H_{0}:\hat{\rho}=0$ against $H_{1}:\hat{\rho}\ne0$
+
+If $d$ value turns out to be near $2$ then there is no autocorrelation.
+
+```{r,echo=FALSE,comment=NA,warning=FALSE}
+library(car)
+durbinWatsonTest(model)
+```
+
+<div class="warning" style='background-color:#A4F2FE; color: #68738A; border-left: solid #818AD5 4px; border-radius: 4px; padding:0.5em;'>
+<span>
+<p style='margin-top:1em; text-align:center'>
+<p style='margin-left:1em; text-align:center'>
+**The value of Durbin Watson test statistic d turns out to be 1.922939 and p-value is 0.574 (>0.05). Thus, the null hypothesis cannot be rejected at 5% level of significance and conclude that there is no autocorrelation in error terms.**
+</p>
+<p style='margin-bottom:0.5em; margin-right:0.5em; text-align:right; font-family:Georgia'> <b>- </b> <i> </i>
+</p></span>
+</div>
+
+## Multicollinearity:
+
+*Advertising data often exhibits multicollinearity due to correlated spending across various channels, common external influences, overlapping audiences and synergistic effects between channels. These factors cause variables to move together, complicating regression analysis and leading to unreliable coefficient estimates.*
+
+Multicollinearity means the existence of perfect relationship among all explanatory variables in a regression model.
+In this model, an exact relationship is said to exist if the following condition is satisfied: $\beta_{1}x_{i1}+\beta_{2}x_{i2}+\beta_{3}x_{i3}+\beta_{4}x_{i4}+\beta_{5}x_{i5}+\beta_{6}x_{i6}=0$ where not all coefficients are simultaneously zero.
+In terms of linear algebra, we explore an issue of multicollinearity if exact linear relationship among the regressors, i.e., at least one column of X will be linear combination of the others and Rank(X) will not be of full column rank and as a result X'X will not be invertible.
+
+In order to detect multicollinearity, we use a standard measure known as **Variance Inflation Factor (VIF)**. 
+
+In the model, $Y_{i}=\beta_{0}+\beta_{1}x_{i1}+\beta_{2}x_{i2}+\beta_{3}x_{i3}+\beta_{4}x_{i4}+\beta_{5}x_{i5}+\beta_{6}x_{i6}+\epsilon_{i}\forall i=1(1)300$, the VIF of the regressor of the jth regressor is defined as: $VIF_{j}=\frac{1}{1-R_{(j)}^{2}}$ where $R_{(j)}^{2}$ is the coefficient of determination from the equation $X_{i}$ on $(X_{1},X_{2},...,X_{j-1},X_{j+1},...,X_{p})$.$VIF_{j}$ measures the dependence of $X_{j}$ on all other 5 regressors. A large VIF value indicates multicollinearity in the model. As a thumb rule, if $VIF>5$ we conclude that there is multicollinearity in the model.
+
+```{r,echo=FALSE,comment=NA}
+vif(model)
+```
+
+<div class="warning" style='background-color:#F4D2FF; color: #68738A; border-left: solid #818AD5 4px; border-radius: 4px; padding:0.5em;'>
+<span>
+<p style='margin-top:1em; text-align:center'>
+<p style='margin-left:1em; text-align:center'>
+**Since none of the values are greater than 5, therefore we can declare there is no multicollinearity in the model.**
+</p>
+<p style='margin-bottom:0.5em; margin-right:0.5em; text-align:right; font-family:Georgia'> <b>- </b> <i> </i>
+</p></span>
+</div>
+
+## Normality of Errors:
+
+*Checking the normality of errors in an advertising regression model is essential for conducting inferential data analysis. Normal errors validate the assumptions required for accurate confidence intervals and hypothesis tests, ensuring reliable predictions and inferences in subsequent analysis.* 
+
+To check the validity of the assumption, we use Q-Q plot. The Q-Q plot is a tool to help us assess if errors are plausibly generated from normal distribution. If the Q-Q plot is roughly straight, we can conclude that errors are from normal distribution.
+
+```{r,echo=FALSE,comment=NA}
+qqnorm(residuals(model),col="navyblue",pch=19)
+qqline(residuals(model),col=2)
+```
+
+The lower tail of the Q-Q plot deviates slightly from the straight line. So we to do a formal test to confirm the validity of normality.
+
+Conducting Shapiro-Wilks Test.
+
+The null hypothesis of interest: H_{0}: The errors are generated from a normal distribution
+
+The test statistic for $H_{0}$ is given by: $W=\frac{(\Sigma_{i=1}^{n}a_{i}\epsilon_{(i)})^{2}}{\Sigma_{i=1}^{n}(\epsilon_{i}-\bar{\epsilon})^{2}}$ where
+
+• $\epsilon_{(i)}$ is the ith ordered error term in the model
+
+• $a_{i}^{'}s$ are calculated using the mean, variance and covariance of the $\epsilon_{i}^{'}s$
+
+W is compared against the tabulated values of this statistic's distribution. If p-value is being used, then if the p-value is smaller than the desired level will lead to rejection of the null hypothesis.
+ 
+```{r,echo=FALSE,comment=NA}
+library(stats)
+shapiro.test(rstudent(model))
+```
+
+<div class="warning" style='background-color:#A4D2EE; color: #68738A; border-left: solid #818AD5 4px; border-radius: 4px; padding:0.5em;'>
+<span>
+<p style='margin-top:1em; text-align:center'>
+<p style='margin-left:1em; text-align:center'>
+**The p-value > 0.05, implying that the distribution of the model are not statistically different from normal distribution. Therefore, the normality assumption can be validated.**
+</p>
+<p style='margin-bottom:0.5em; margin-right:0.5em; text-align:right; font-family:Georgia'> <b>- </b> <i> </i>
+</p></span>
+</div>
+
+# INFERENTIAL DATA ANALYSIS
+
+The errors are assumed to follow a normal distribution as validated while checking model assumptions.
+
+$\epsilon_{i}\sim N(0,\sigma^{2})\forall i$
+
+First, we check whether there is a relationship between any of the predictors and the response. To do this a hypothesis test is done to answer the question. 
+The null hypothesis is tested:
+$H_{0}:\beta_{1}=\beta_{2}=\beta_{3}=\beta_{4}=\beta_{5}=\beta_{6}=0$
+versus the alternative hypothesis:
+$H_{1}:$at least one $\beta_{j}$ is non-zero $\forall j=1(1)6$
+
+To test if the beta coefficient is equal to zero, the t-value and the corresponding p-value for the coefficient is observed from the output of **summary(model)**.
+
+```{r,echo=FALSE,comment=NA}
+summary(model)
+```
+
+Since the p-value for all the predictors is <2e-16 (which is less than 0.001), the null hypothesis is rejected and it can be concluded that all the predictors have a significant effect on the response variable **Product_Sold**. The beta coefficient is significantly different from zero (i.e. $\beta_1\ne0,\beta_2\ne0,\beta_3\ne0,\beta_4\ne0,\beta_5\ne0,\beta_6\ne0$) , indicating that changes in the predictors are associated with changes in the response.
+
+The F-statistic in a linear regression model summary tests the overall significance of the model. It evaluates whether there is a relationship between the response variable and the predictors collectively. 
+
+Null hypothesis $H_0$:
+All regression coefficients are equal to zero, meaning none of the predictors have any explanatory power for the response variable.
+
+Alternative Hypothesis $H_1$:
+At least one regression coefficient is not equal to zero, meaning at least one predictor has some explanatory power for the response variable.
+
+Since the p-value is <2e-16, which is less than 0.05,the null hypothesis is rejected. This indicates that the regression model with the predictors provides a significantly better fit to the data than a model with no predictors. In other words, at least one of the predictors in the model is significantly related to the response variable. The F-statistic value is quite high (1.347e+06) which indicates that the model explains a significant portion of the variance in the response variable.
+
+<div class="warning" style='background-color:#D4D2DD; color: #68738A; border-left: solid #818AD5 4px; border-radius: 4px; padding:0.1em;'>
+<span>
+<p style='margin-top:1em; text-align:center'>
+<p style='margin-left:0.5em; text-align:center'>
+**All the covariates are statistically significant. The entire model explains the variance in Product_Sold significantly.**
+</p>
+<p style='margin-bottom:1em; margin-right:0.5em; text-align:right; font-family:Georgia'> <b>- </b> <i> </i>
+</p></span>
+</div>
+
+
+# CONCLUSION
+
+After analyzing the data, our final model is:
+
+<div class="warning" style='background-color:#A4D2FE; color: #68738A; border-left: solid #818AD5 4px; border-radius: 4px; padding:0.5em;'>
+<span>
+<p style='margin-top:1em; text-align:center'>
+<b>**Final Model:**</b></p>
+<p style='margin-left:1em; text-align:center'>
+**Product_Sold** = **-4.360048 + 2.002190 * TV + 3.000949 * Billboards + 1.500990 * Google_Ads + 2.502018 * Social_Media + 1.198624 * Influencer_Marketing + 4.001492 * Affiliate_Marketing** + $\epsilon_{i}\forall i=1(1)300$ 
+</p>
+<p style='margin-bottom:0.5em; margin-right:0.5em; text-align:right; font-family:Georgia'> <b>- </b> <i> </i>
+</p></span>
+</div>
+
+
+It can be concluded that on increasing 1 unit of advertising costs on television the number of units sold increases approximately by 2 units. Similarly, on increasing 1 unit of advertising costs associated with billboards the number of units sold increases approximately by 3 units. By increasing 1 unit advertising costs incurred on Google Ads the number of units sold increases by 1.5 units. The number of units sold increases by approximately 1.5 units by increasing 1 unit of advertising expenses on various social media platforms. Finally on increasing 1 unit of increase in costs related to influencer marketing and expenditure on affiliate marketing efforts, the number of units sold increases by approximately 2 and 4 units respectively.
+
+
+
